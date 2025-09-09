@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getConnection } from "@/lib/db";
+import { getConnection } from "../../../lib/db";
 
 // ✅ Get orders (all or by status)
 export async function GET(req) {
   try {
-    const db = await getConnection();
+    const db = getConnection();
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
 
@@ -12,13 +12,14 @@ export async function GET(req) {
     let values = [];
 
     if (status) {
-      query += " WHERE status = ?";
+      query += " WHERE status = $1";
       values.push(status);
     }
 
-    const [rows] = await db.execute(query, values);
-    return NextResponse.json(rows);
+    const result = await db.query(query, values);
+    return NextResponse.json(result.rows);
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("🔥 GET /orders error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

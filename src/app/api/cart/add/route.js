@@ -5,36 +5,35 @@ import { getConnection } from "@/lib/db";
 export async function POST(req) {
   try {
     const { userId, productId, quantity = 1 } = await req.json();
-    const db = await getConnection();
+    const db = getConnection();
 
     // Ensure user has a cart
-    const [cartRows] = await db.execute(
-      "SELECT id FROM carts WHERE user_id = ?",
-      [userId]
-    );
-
+    const cartResult = await db.query("SELECT id FROM carts WHERE user_id = $1", [userId]);
     let cartId;
-    if (cartRows.length === 0) {
-      const [insertCart] = await db.execute(
-        "INSERT INTO carts (user_id) VALUES (?)",
+
+    if (cartResult.rows.length === 0) {
+      const insertCart = await db.query(
+        "INSERT INTO carts (user_id) VALUES ($1) RETURNING id",
         [userId]
       );
-      cartId = insertCart.insertId;
+      cartId = insertCart.rows[0].id;
     } else {
-      cartId = cartRows[0].id;
+      cartId = cartResult.rows[0].id;
     }
 
     // Insert / update product in cart_items
-    await db.execute(
+    // PostgreSQL uses ON CONFLICT instead of MySQL's ON DUPLICATE KEY
+    await db.query(
       `INSERT INTO cart_items (cart_id, product_id, quantity)
-       VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE quantity = quantity + ?`,
-      [cartId, productId, quantity, quantity]
+       VALUES ($1, $2, $3)
+       ON CONFLICT (cart_id, product_id) 
+       DO UPDATE SET quantity = cart_items.quantity + EXCLUDED.quantity`,
+      [cartId, productId, quantity]
     );
 
     return NextResponse.json({ success: true, message: "Product added to cart" });
   } catch (err) {
-    console.log(err)
+    console.error(err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

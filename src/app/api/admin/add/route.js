@@ -1,11 +1,10 @@
 import { getConnection } from "@/lib/db";
 import { hash } from "bcryptjs";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+// import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(req) {
   try {
-    // ✅ Correct usage in app router API
     const session = await getServerSession({ req, ...authOptions });
 
     if (!session || session.user.role !== "admin") {
@@ -21,11 +20,11 @@ export async function POST(req) {
       });
     }
 
-    const db = await getConnection();
+    const db = getConnection();
 
     // ✅ Check if user exists
-    const [existing] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
-    if (existing.length > 0) {
+    const existingResult = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+    if (existingResult.rows.length > 0) {
       return new Response(JSON.stringify({ error: "User already exists" }), {
         status: 400,
       });
@@ -35,8 +34,8 @@ export async function POST(req) {
     const hashedPassword = await hash(password, 10);
 
     // ✅ Insert new admin
-    await db.execute(
-      "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
+    await db.query(
+      "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)",
       [name, email, hashedPassword, "admin"]
     );
 

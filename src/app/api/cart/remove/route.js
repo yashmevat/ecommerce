@@ -1,48 +1,47 @@
 // src/app/api/cart/remove/route.js
 import { NextResponse } from "next/server";
-import { getConnection } from "@/lib/db";
+import { getConnection } from "../../../../lib/db";
 
 export async function POST(req) {
   try {
     const { userId, productId } = await req.json();
-    const db = await getConnection();
+    const db = getConnection();
 
-    // First, get the current quantity
-    const [rows] = await db.execute(
-      `SELECT ci.quantity
+    // Get the current quantity
+    const result = await db.query(
+      `SELECT ci.quantity, ci.id as cart_item_id
        FROM cart_items ci
        JOIN carts c ON ci.cart_id = c.id
-       WHERE c.user_id = ? AND ci.product_id = ?`,
+       WHERE c.user_id = $1 AND ci.product_id = $2`,
       [userId, productId]
     );
 
-    if (!rows.length) {
+    if (result.rows.length === 0) {
       return NextResponse.json({ error: "Item not found in cart" }, { status: 404 });
     }
 
-    const currentQuantity = rows[0].quantity;
+    const { quantity, cart_item_id } = result.rows[0];
 
-    if (currentQuantity > 1) {
+    if (quantity > 1) {
       // Reduce quantity by 1
-      await db.execute(
-        `UPDATE cart_items ci
-         JOIN carts c ON ci.cart_id = c.id
-         SET ci.quantity = ci.quantity - 1
-         WHERE c.user_id = ? AND ci.product_id = ?`,
-        [userId, productId]
+      await db.query(
+        `UPDATE cart_items
+         SET quantity = quantity - 1
+         WHERE id = $1`,
+        [cart_item_id]
       );
       return NextResponse.json({ success: true, message: "Quantity decreased by 1" });
     } else {
       // Remove item if quantity is 1
-      await db.execute(
-        `DELETE ci FROM cart_items ci
-         JOIN carts c ON ci.cart_id = c.id
-         WHERE c.user_id = ? AND ci.product_id = ?`,
-        [userId, productId]
+      await db.query(
+        `DELETE FROM cart_items
+         WHERE id = $1`,
+        [cart_item_id]
       );
       return NextResponse.json({ success: true, message: "Item removed from cart" });
     }
   } catch (err) {
+    console.error("Cart remove error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

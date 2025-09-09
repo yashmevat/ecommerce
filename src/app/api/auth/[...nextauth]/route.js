@@ -2,15 +2,13 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { compare } from "bcryptjs";
-import { getConnection } from "@/lib/db";
+import { getConnection } from "../../../../lib/db";
 
 // helper to fetch user by email
 async function getUserByEmail(email) {
-  const db = await getConnection();
-  const [rows] = await db.execute("SELECT * FROM users WHERE email = ?", [
-    email,
-  ]);
-  return rows.length > 0 ? rows[0] : null;
+  const db = getConnection();
+  const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+  return result.rows.length > 0 ? result.rows[0] : null;
 }
 
 const handler = NextAuth({
@@ -47,32 +45,30 @@ const handler = NextAuth({
 
   callbacks: {
     async signIn({ user, account }) {
-  const db = await getConnection();
+      const db = getConnection();
 
-  if (account?.provider === "google") {
-    const [rows] = await db.execute("SELECT * FROM users WHERE email = ?", [user.email]);
+      if (account?.provider === "google") {
+        const result = await db.query("SELECT * FROM users WHERE email = $1", [user.email]);
+        let dbUser;
 
-    let dbUser;
-    if (rows.length === 0) {
-      const [result] = await db.execute(
-        "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
-        [user.name || "Google User", user.email, null, "customer"]
-      );
-      dbUser = { id: result.insertId, name: user.name, email: user.email, role: "customer" };
-    } else {
-      dbUser = rows[0];
-    }
+        if (result.rows.length === 0) {
+          const insertResult = await db.query(
+            "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *",
+            [user.name || "Google User", user.email, null, "customer"]
+          );
+          dbUser = insertResult.rows[0];
+        } else {
+          dbUser = result.rows[0];
+        }
 
-    user.id = dbUser.id;
-    user.role = dbUser.role;
-  }
+        user.id = dbUser.id;
+        user.role = dbUser.role;
+      }
 
-  return user; // ⬅️ ye important hai
-},
-
+      return user; // ⬅️ important
+    },
 
     async jwt({ token, user }) {
-      // attach user info to token at login
       if (user) {
         token.id = user.id;
         token.role = user.role || "customer";

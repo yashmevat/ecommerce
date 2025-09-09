@@ -1,5 +1,5 @@
 import { hash } from "bcryptjs";
-import { getConnection } from "@/lib/db";
+import { getConnection } from "../../../../lib/db";
 
 export async function POST(req) {
   try {
@@ -9,18 +9,18 @@ export async function POST(req) {
       return new Response(JSON.stringify({ error: "All fields required" }), { status: 400 });
     }
 
-    const db = await getConnection();
+    const db = getConnection();
 
-    // check if email already exists
-    const [existing] = await db.execute("SELECT * FROM users WHERE email = ?", [email]);
-    if (existing.length > 0) {
+    // Check if email already exists
+    const existing = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+    if (existing.rows.length > 0) {
       return new Response(JSON.stringify({ error: "User already exists" }), { status: 400 });
     }
 
     const hashedPassword = await hash(password, 10);
 
-    await db.execute(
-      "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
+    await db.query(
+      "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)",
       [name, email, hashedPassword, "customer"]
     );
 
