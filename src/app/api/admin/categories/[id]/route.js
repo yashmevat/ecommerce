@@ -1,16 +1,16 @@
 import { getConnection } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../../auth/[...nextauth]/route"; // adjust path
+// import { getServerSession } from "next-auth";
+// import { authOptions } from "../../../auth/[...nextauth]/route"; // adjust path
 
 // ✅ Update category (Admin only)
 export async function PUT(req, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    // const session = await getServerSession(authOptions);
 
-    if (!session || session.user.role !== "admin") {
-      return NextResponse.json({ error: "Unauthorized - Admins only" }, { status: 403 });
-    }
+    // if (!session || session.user.role !== "admin") {
+    //   return NextResponse.json({ error: "Unauthorized - Admins only" }, { status: 403 });
+    // }
 
     const { name, description } = await req.json();
     if (!name || !description) {
@@ -33,11 +33,11 @@ export async function PUT(req, { params }) {
 // ✅ Delete category (Admin only)
 export async function DELETE(req, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    // const session = await getServerSession(authOptions);
 
-    if (!session || session.user.role !== "admin") {
-      return NextResponse.json({ error: "Unauthorized - Admins only" }, { status: 403 });
-    }
+    // if (!session || session.user.role !== "admin") {
+    //   return NextResponse.json({ error: "Unauthorized - Admins only" }, { status: 403 });
+    // }
 
     const db = getConnection();
     await db.query("DELETE FROM categories WHERE id = $1", [params.id]);
