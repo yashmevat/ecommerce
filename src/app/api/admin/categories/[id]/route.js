@@ -1,7 +1,7 @@
 import { getConnection } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // adjust path
+import { authOptions } from "../../../auth/[...nextauth]/route"; // adjust path
 
 // ✅ Update category (Admin only)
 export async function PUT(req, { params }) {
