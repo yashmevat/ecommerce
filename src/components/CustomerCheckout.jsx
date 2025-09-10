@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+import { useEffect, useState } from "react";
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+);
 
-export default function CustomerCheckout({ userId, cartTotal, onOrderPlaced, onClose }) {
+export default function CustomerCheckout({ userId, cartTotal, onOrderPlaced, onClose ,cartItems}) {
   const [details, setDetails] = useState({
     name: "",
     email: "",
@@ -24,16 +28,41 @@ export default function CustomerCheckout({ userId, cartTotal, onOrderPlaced, onC
     setLoading(true);
 
     // Simulate test payment
-    if (paymentMethod === "testpay") {
-      alert("Redirecting to TestPay (simulated)...");
-      await new Promise((r) => setTimeout(r, 1500));
-    }
+   if (paymentMethod === "testpay") {
+  setLoading(true);
+
+  const res = await fetch("/api/checkout/stripe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      details,
+      userId,
+      items: cartItems.map((item) => ({
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+    }),
+  });
+
+  const { url, error } = await res.json();
+  if (!res.ok) {
+    alert("Stripe checkout error: " + error);
+    setLoading(false);
+    return;
+  }
+
+  window.location.href = url; // ✅ redirect directly to Stripe Checkout
+  return;
+}
+
+
 
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, ...details, paymentMethod }),
+        body: JSON.stringify({ userId, details, paymentMethod }),
       });
 
       const data = await res.json();
@@ -53,6 +82,7 @@ export default function CustomerCheckout({ userId, cartTotal, onOrderPlaced, onC
     }
   };
 
+ 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <div className="bg-white rounded shadow-lg w-full max-w-lg p-6 relative">

@@ -23,41 +23,41 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-      <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md border border-gray-200">
         <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
           Create Your Account
         </h1>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             type="text"
-            placeholder="Name"
-            className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+            placeholder="Full Name"
+            className="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
           <input
             type="email"
-            placeholder="Email"
-            className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+            placeholder="Email Address"
+            className="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
           <input
             type="password"
             placeholder="Password"
-            className="border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+            className="p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
           <button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition"
+            className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-semibold transition transform hover:scale-105"
           >
             Sign Up
           </button>
         </form>
-        <p className="text-sm text-gray-500 mt-4 text-center">
+        <p className="text-sm text-gray-500 mt-6 text-center">
           Already have an account?{" "}
           <a href="/signin" className="text-blue-600 hover:underline">
             Sign In

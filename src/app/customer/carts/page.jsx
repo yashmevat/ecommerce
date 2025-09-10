@@ -14,6 +14,12 @@ export default function CartPage() {
 
   const userId = session?.user?.id;
 
+   useEffect(()=>{
+     if(cartItems){
+      console.log(cartItems)
+     }
+  },[cartItems])
+
   // Fetch cart items
   async function fetchCart() {
     if (!userId) return;
@@ -153,6 +159,7 @@ if (cartItems.length === 0)
           <CustomerCheckout
             userId={userId}
             cartTotal={cartTotal}
+            cartItems={cartItems}
             onOrderPlaced={fetchCart}
             onClose={() => setShowCheckout(false)}
           />

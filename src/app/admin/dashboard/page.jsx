@@ -65,7 +65,7 @@ export default function AdminDashboardPage() {
 
   if (!session) return <p>Loading...</p>;
 
-  // 🔹 Prepare chart data
+  // 🔹 Chart Data
   const statsData = [
     { name: "Pending Orders", value: stats.pendingOrders },
     { name: "Products", value: stats.products },
@@ -79,7 +79,7 @@ export default function AdminDashboardPage() {
     { name: "Cancelled", value: recentOrders.filter(o => o.status.toLowerCase() === "cancelled").length },
   ];
 
-  const COLORS = ["#3B82F6", "#10B981", "#F59E0B"]; // blue, green, yellow
+  const COLORS = ["#3B82F6", "#6B7280", "#D1D5DB"]; // subtle blue, gray
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -92,17 +92,16 @@ export default function AdminDashboardPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <DashboardCard title="Pending Orders" value={stats.pendingOrders} color="text-blue-600" />
-          <DashboardCard title="Total Products" value={stats.products} color="text-green-600" />
-          <DashboardCard title="Categories" value={stats.categories} color="text-purple-600" />
-          <DashboardCard title="Customers" value={stats.customers} color="text-orange-600" />
+          <DashboardCard title="Pending Orders" value={stats.pendingOrders} />
+          <DashboardCard title="Total Products" value={stats.products} />
+          <DashboardCard title="Categories" value={stats.categories} />
+          <DashboardCard title="Customers" value={stats.customers} />
         </div>
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12">
           {/* Bar Chart */}
-          <div className="bg-white shadow rounded-xl p-6">
-            <h2 className="text-lg font-semibold mb-4">Overview (Bar Chart)</h2>
+          <ChartCard title="Overview (Bar Chart)">
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={statsData}>
                 <XAxis dataKey="name" />
@@ -112,11 +111,10 @@ export default function AdminDashboardPage() {
                 <Bar dataKey="value" fill="#3B82F6" />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </ChartCard>
 
           {/* Pie Chart */}
-          <div className="bg-white shadow rounded-xl p-6">
-            <h2 className="text-lg font-semibold mb-4">Order Status (Pie Chart)</h2>
+          <ChartCard title="Order Status (Pie Chart)">
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
@@ -135,29 +133,28 @@ export default function AdminDashboardPage() {
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          </div>
+          </ChartCard>
 
           {/* Line Chart */}
-          <div className="bg-white shadow rounded-xl p-6 lg:col-span-2">
-            <h2 className="text-lg font-semibold mb-4">Recent Orders (Line Chart)</h2>
+          <ChartCard title="Recent Orders (Line Chart)" full>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={recentOrders}>
-                <XAxis dataKey="id" label={{ value: "Order ID", position: "insideBottomRight", offset: -5 }} />
+                <XAxis dataKey="id" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="total_amount" stroke="#10B981" name="Order Total ₹" />
+                <Line type="monotone" dataKey="total_amount" stroke="#3B82F6" name="Order Total ₹" />
               </LineChart>
             </ResponsiveContainer>
-          </div>
+          </ChartCard>
         </div>
 
         {/* Recent Orders Table */}
         <div className="mt-12 bg-white shadow rounded-xl p-6 overflow-x-auto">
           <h2 className="text-xl font-semibold mb-4">Recent Orders</h2>
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="bg-gray-200 text-left">
+              <tr className="bg-gray-100 text-left">
                 <th className="p-3">Order ID</th>
                 <th className="p-3">User ID</th>
                 <th className="p-3">Status</th>
@@ -172,12 +169,27 @@ export default function AdminDashboardPage() {
                   </td>
                 </tr>
               ) : (
-                recentOrders.map((order) => (
-                  <tr key={order.id} className="border-b">
-                    <td className="p-3">#{order.id}</td>
+                recentOrders.map((order, i) => (
+                  <tr
+                    key={order.id}
+                    className={`${i % 2 === 0 ? "bg-gray-50" : "bg-white"} border-b`}
+                  >
+                    <td className="p-3 font-medium">#{order.id}</td>
                     <td className="p-3">{order.user_id}</td>
-                    <td className="p-3">{order.status}</td>
-                    <td className="p-3">₹{order.total_amount}</td>
+                    <td className="p-3">
+                      <span
+                        className={`px-3 py-1 text-xs font-medium rounded ${
+                          order.status.toLowerCase() === "pending"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : order.status.toLowerCase() === "completed"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="p-3 font-semibold">₹{order.total_amount}</td>
                   </tr>
                 ))
               )}
@@ -189,11 +201,22 @@ export default function AdminDashboardPage() {
   );
 }
 
-function DashboardCard({ title, value, color }) {
+function DashboardCard({ title, value }) {
   return (
     <div className="bg-white shadow rounded-xl p-6 flex flex-col items-center justify-center">
-      <p className="text-gray-500">{title}</p>
-      <h2 className={`text-2xl font-bold ${color}`}>{value}</h2>
+      <p className="text-gray-500 text-sm">{title}</p>
+      <h2 className="text-2xl font-bold text-gray-800">{value}</h2>
+    </div>
+  );
+}
+
+function ChartCard({ title, children, full }) {
+  return (
+    <div
+      className={`bg-white shadow rounded-xl p-6 ${full ? "lg:col-span-2" : ""}`}
+    >
+      <h2 className="text-lg font-semibold mb-4 text-gray-700">{title}</h2>
+      {children}
     </div>
   );
 }

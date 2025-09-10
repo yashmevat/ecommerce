@@ -1,16 +1,27 @@
 import { getConnection } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // adjust path
 
-// ✅ Update category
+// ✅ Update category (Admin only)
 export async function PUT(req, { params }) {
   try {
-    const { name,description } = await req.json();
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized - Admins only" }, { status: 403 });
+    }
+
+    const { name, description } = await req.json();
     if (!name || !description) {
       return NextResponse.json({ error: "Category name and description required" }, { status: 400 });
     }
 
     const db = getConnection();
-    await db.query("UPDATE categories SET name = $1 , description = $2 WHERE id = $3", [name, description ,params.id]);
+    await db.query(
+      "UPDATE categories SET name = $1, description = $2 WHERE id = $3",
+      [name, description, params.id]
+    );
 
     return NextResponse.json({ message: "Category updated" });
   } catch (error) {
@@ -19,9 +30,15 @@ export async function PUT(req, { params }) {
   }
 }
 
-// ✅ Delete category
+// ✅ Delete category (Admin only)
 export async function DELETE(req, { params }) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized - Admins only" }, { status: 403 });
+    }
+
     const db = getConnection();
     await db.query("DELETE FROM categories WHERE id = $1", [params.id]);
 
