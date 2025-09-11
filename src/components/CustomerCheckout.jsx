@@ -84,89 +84,116 @@ export default function CustomerCheckout({ userId, cartTotal, onOrderPlaced, onC
 
  
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded shadow-lg w-full max-w-lg p-6 relative">
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
-        >
-          ✕
-        </button>
+   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative animate-fadeIn">
+    {/* Close Button */}
+    <button
+      onClick={onClose}
+      className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 transition"
+    >
+      ✕
+    </button>
 
-        <h2 className="text-2xl font-bold mb-4">Checkout</h2>
+    {/* Title */}
+    <h2 className="text-2xl font-bold mb-6 text-gray-900 text-center">
+      🛒 Checkout
+    </h2>
 
-        <div className="space-y-4">
-          <input
-            type="text"
-            name="name"
-            placeholder="Full Name"
-            value={details.name}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={details.email}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-          <textarea
-            name="address"
-            placeholder="Shipping Address"
-            value={details.address}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-          <input
-            type="tel"
-            name="phone"
-            placeholder="Phone Number"
-            value={details.phone}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
+    {/* Form */}
+    <div className="space-y-4">
+      <input
+        type="text"
+        name="name"
+        placeholder="Full Name"
+        value={details.name}
+        onChange={handleChange}
+        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+      />
+      <input
+        type="email"
+        name="email"
+        placeholder="Email"
+        value={details.email}
+        onChange={handleChange}
+        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+      />
+      <textarea
+        name="address"
+        placeholder="Shipping Address"
+        value={details.address}
+        onChange={handleChange}
+        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition resize-none"
+        rows="3"
+      />
+      <input
+        type="tel"
+        name="phone"
+        placeholder="Phone Number"
+        value={details.phone}
+        onChange={handleChange}
+        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+      />
 
-          <div className="mt-4">
-            <p className="font-semibold mb-2">Payment Method</p>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="payment"
-                  value="cod"
-                  checked={paymentMethod === "cod"}
-                  onChange={() => setPaymentMethod("cod")}
-                />
-                Cash on Delivery
-              </label>
+      {/* Payment Method */}
+      <div className="mt-4">
+        <p className="font-semibold mb-3 text-gray-800">Payment Method</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label
+            className={`flex items-center gap-2 border rounded-xl p-3 cursor-pointer transition 
+              ${
+                paymentMethod === "cod"
+                  ? "border-blue-600 bg-blue-50"
+                  : "border-gray-300 hover:border-blue-400"
+              }`}
+          >
+            <input
+              type="radio"
+              name="payment"
+              value="cod"
+              checked={paymentMethod === "cod"}
+              onChange={() => setPaymentMethod("cod")}
+              className="hidden"
+            />
+            💵 Cash on Delivery
+          </label>
 
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="payment"
-                  value="testpay"
-                  checked={paymentMethod === "testpay"}
-                  onChange={() => setPaymentMethod("testpay")}
-                />
-                Pay with TestPay
-              </label>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <p className="text-lg font-semibold">Total: ₹{cartTotal}</p>
-            <button
-              onClick={placeOrder}
-              disabled={loading}
-              className="mt-2 w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-            >
-              {loading ? "Processing..." : "Place Order"}
-            </button>
-          </div>
+          <label
+            className={`flex items-center gap-2 border rounded-xl p-3 cursor-pointer transition 
+              ${
+                paymentMethod === "testpay"
+                  ? "border-blue-600 bg-blue-50"
+                  : "border-gray-300 hover:border-blue-400"
+              }`}
+          >
+            <input
+              type="radio"
+              name="payment"
+              value="testpay"
+              checked={paymentMethod === "testpay"}
+              onChange={() => setPaymentMethod("testpay")}
+              className="hidden"
+            />
+            💳 Pay with TestPay
+          </label>
         </div>
       </div>
+
+      {/* Order Summary */}
+      <div className="mt-6 text-center">
+        <p className="text-lg font-semibold text-gray-800">
+          Total: <span className="text-green-600">₹{cartTotal}</span>
+        </p>
+        <button
+          onClick={placeOrder}
+          disabled={loading}
+          className="mt-4 w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 rounded-xl font-semibold shadow-md transition transform hover:-translate-y-0.5"
+        >
+          {loading ? "Processing..." : "Place Order"}
+        </button>
+      </div>
     </div>
+  </div>
+</div>
+
   );
 }
