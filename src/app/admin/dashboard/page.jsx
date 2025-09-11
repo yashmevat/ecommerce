@@ -6,8 +6,10 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line
 } from "recharts";
+import Loader from "@/components/Loader";
 
 export default function AdminDashboardPage() {
+  const [loading,setLoading] = useState(false)
   const [session, setSession] = useState(null);
   const [stats, setStats] = useState({
     pendingOrders: 0,
@@ -18,6 +20,7 @@ export default function AdminDashboardPage() {
   const [recentOrders, setRecentOrders] = useState([]);
 
   useEffect(() => {
+    setLoading(true)
     getSession().then((sess) => {
       if (!sess) {
         window.location.href = "/signin";
@@ -28,10 +31,12 @@ export default function AdminDashboardPage() {
         fetchDashboardData();
       }
     });
+    setLoading(false)
   }, []);
 
   const fetchDashboardData = async () => {
     try {
+      setLoading(true)
       const [productsRes, categoriesRes, ordersRes] = await Promise.all([
         fetch("/api/products"),
         fetch("/api/admin/categories"),
@@ -58,7 +63,9 @@ export default function AdminDashboardPage() {
       });
 
       setRecentOrders(orders.slice(0, 5));
+      setLoading(false)
     } catch (err) {
+      setLoading(false)
       console.error("Error fetching dashboard data:", err);
     }
   };
@@ -81,6 +88,9 @@ export default function AdminDashboardPage() {
 
   const COLORS = ["#3B82F6", "#6B7280", "#D1D5DB"]; // subtle blue, gray
 
+  if(loading){
+    return <Loader/>
+  }
   return (
     <div className="min-h-screen bg-gray-100">
       <AdminNavbar />

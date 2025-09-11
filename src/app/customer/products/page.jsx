@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
 import Navbar from "@/components/Navbar";
+import Loader from "@/components/Loader";
 
 export default function ProductsPage() {
   const { data: session, status } = useSession();
@@ -10,30 +11,53 @@ export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [quantities, setQuantities] = useState({});
+  const [loading, setLoading] = useState(false);
+
   const userId = session?.user?.id;
 
+  // Fetch Categories
   useEffect(() => {
-    fetch("/api/admin/categories")
-      .then((res) => res.json())
-      .then(setCategories)
-      .catch(console.error);
+    async function fetchCategories() {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/admin/categories");
+        const data = await res.json();
+        setCategories(data);
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchCategories();
   }, []);
 
+  // Fetch Products
   useEffect(() => {
-    let url = "/api/products";
-    if (selectedCategory) url += `?category_id=${selectedCategory}`;
-    fetch(url)
-      .then((res) => res.json())
-      .then(setProducts)
-      .catch(console.error);
+    async function fetchProducts() {
+      try {
+        setLoading(true);
+        let url = "/api/products";
+        if (selectedCategory) url += `?category_id=${selectedCategory}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        setProducts(data);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProducts();
   }, [selectedCategory]);
 
-  if (status === "loading")
+  if (status === "loading") {
     return (
       <div className="flex justify-center items-center h-screen">
-        <p className="text-lg">Loading...</p>
+        <p className="text-lg">Loading session...</p>
       </div>
     );
+  }
 
   async function addToCart(productId) {
     const quantity = quantities[productId] || 1;
@@ -41,15 +65,23 @@ export default function ProductsPage() {
       alert("Please login first");
       return;
     }
-    const res = await fetch("/api/cart/add", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, productId, quantity }),
-    });
-    if (res.ok) alert(`Added ${quantity} item(s) to cart ✅`);
-    else {
-      const err = await res.json();
-      alert("Error: " + err.error);
+    try {
+      setLoading(true);
+      const res = await fetch("/api/cart/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, productId, quantity }),
+      });
+      if (res.ok) {
+        alert(`Added ${quantity} item(s) to cart ✅`);
+      } else {
+        const err = await res.json();
+        alert("Error: " + err.error);
+      }
+    } catch (err) {
+      console.error("Error adding to cart:", err);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -89,8 +121,10 @@ export default function ProductsPage() {
           </select>
         </div>
 
-        {/* Products Grid */}
-        {products.length === 0 ? (
+        {/* Loader */}
+        {loading ? (
+         <Loader/>
+        ) : products.length === 0 ? (
           <p className="text-center text-gray-500">No products found 😢</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -105,7 +139,9 @@ export default function ProductsPage() {
                   className="w-full h-48 object-cover rounded-xl mb-4"
                 />
                 <h2 className="text-xl font-semibold text-gray-800">{product.name}</h2>
-                <p className="text-gray-500 text-sm mt-1 line-clamp-2">{product.description}</p>
+                <p className="text-gray-500 text-sm mt-1 line-clamp-2">
+                  {product.description}
+                </p>
                 <p className="text-lg font-bold mt-2">₹{product.price}</p>
 
                 {/* Quantity Input */}
@@ -130,9 +166,11 @@ export default function ProductsPage() {
 
                 <button
                   onClick={() => addToCart(product.id)}
-                  disabled={!userId}
+                  disabled={!userId || loading}
                   className={`mt-4 py-2 rounded-lg text-white font-semibold transition ${
-                    userId ? "bg-green-600 hover:bg-green-700" : "bg-gray-400 cursor-not-allowed"
+                    userId && !loading
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "bg-gray-400 cursor-not-allowed"
                   }`}
                 >
                   {userId ? "Add to Cart" : "Login to Add"}

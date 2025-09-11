@@ -2,10 +2,12 @@
 import { useEffect, useState } from "react";
 import AdminNavbar from "@/components/AdminNavbar";
 import { Plus, Edit3, Trash2, Save } from "lucide-react";
+import Loader from "@/components/Loader";
 
 export default function ManageProducts() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [loading,setLoading]=useState(false)
   const [form, setForm] = useState({
     name: "",
     price: "",
@@ -18,19 +20,24 @@ export default function ManageProducts() {
 
   // ====== Fetch Data ======
   async function fetchProducts() {
+    setLoading(true)
     const res = await fetch("/api/admin/products");
     const data = await res.json();
     setProducts(data);
+    setLoading(false)
   }
 
   async function fetchCategories() {
+    setLoading(true)
     const res = await fetch("/api/admin/categories");
     const data = await res.json();
     setCategories(data);
+    setLoading(false)
   }
 
   // ====== CRUD ======
   async function addProduct() {
+    setLoading(true)
     await fetch("/api/admin/products", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -38,9 +45,11 @@ export default function ManageProducts() {
     });
     resetForm();
     fetchProducts();
+    setLoading(false)
   }
 
   async function updateProduct(id) {
+    setLoading(true)
     await fetch(`/api/admin/products/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -49,11 +58,14 @@ export default function ManageProducts() {
     resetForm();
     setEditing(null);
     fetchProducts();
+    setLoading(false)
   }
 
   async function deleteProduct(id) {
+    setLoading(true)
     await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
     fetchProducts();
+    setLoading(false)
   }
 
   function resetForm() {
@@ -71,6 +83,11 @@ export default function ManageProducts() {
     fetchProducts();
     fetchCategories();
   }, []);
+
+
+  if(loading){
+    return <Loader/>
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">

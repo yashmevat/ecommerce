@@ -11,19 +11,18 @@ export default function AdminNavbar() {
   useEffect(() => {
     getSession().then((sess) => {
       if (!sess) {
-        window.location.href = "/signin";
+        window.location.href = "/signin"; // redirect if not logged in
       } else if (sess.user.role !== "admin") {
-        window.location.href = "/customer/dashboard";
+        window.location.href = "/customer/dashboard"; // redirect if not admin
       } else {
-        setSession(sess);
+        setSession(sess); // set session if admin
       }
     });
   }, []);
 
-  if (!session) return <p>Loading...</p>;
-
   const toggleMenu = () => setIsOpen(!isOpen);
 
+  // Navbar will render immediately; session-dependent info will update when available
   return (
     <nav className="w-full bg-gray-900 text-white shadow-lg">
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center h-16">
@@ -45,10 +44,10 @@ export default function AdminNavbar() {
           </Link>
         </div>
 
-        {/* User Info + Logout (Desktop) */}
+        {/* User Info + Logout */}
         <div className="hidden md:flex items-center gap-4">
           <span className="text-sm">
-            {session.user?.name} ({session.user?.email})
+            {session?.user?.name || "Admin"} ({session?.user?.email || "Loading..."})
           </span>
           <button
             onClick={() => signOut({ callbackUrl: "/signin" })}
@@ -60,9 +59,7 @@ export default function AdminNavbar() {
 
         {/* Mobile Menu Button */}
         <div className="md:hidden flex items-center">
-          <button onClick={toggleMenu}>
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <button onClick={toggleMenu}>{isOpen ? <X size={24} /> : <Menu size={24} />}</button>
         </div>
       </div>
 
@@ -93,7 +90,7 @@ export default function AdminNavbar() {
 
           <div className="border-t border-gray-700 pt-3 flex flex-col gap-2">
             <span className="text-sm text-gray-300">
-              {session.user?.name} ({session.user?.email})
+              {session?.user?.name || "Admin"} ({session?.user?.email || "Loading..."})
             </span>
             <button
               onClick={() => signOut({ callbackUrl: "/signin" })}

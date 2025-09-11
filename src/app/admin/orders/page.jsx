@@ -1,36 +1,47 @@
 "use client";
 import AdminNavbar from "@/components/AdminNavbar";
+import Loader from "@/components/Loader";
 import { useState, useEffect } from "react";
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState("all");
-
+  const [loading,setLoading] = useState(false)
   useEffect(() => {
     fetchOrders();
   }, [filter]);
 
   async function fetchOrders() {
+    setLoading(true)
     try {
       const res = await fetch(`/api/orders?status=${filter}`);
       const data = await res.json();
       setOrders(data);
     } catch (err) {
+        setLoading(false)
       console.error("Error fetching orders:", err);
     }
+    setLoading(false)
   }
 
   async function updateStatus(orderId, newStatus) {
     try {
+        setLoading(true)
       await fetch(`/api/orders`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({orderId:orderId, status: newStatus }),
       });
-      fetchOrders(); // Refresh after update
+      fetchOrders();
+      setLoading(false) // Refresh after update
     } catch (err) {
+        setLoading(false)
       console.error("Error updating status:", err);
     }
+  }
+
+  if(loading){
+    return <Loader/>
   }
 
   return (

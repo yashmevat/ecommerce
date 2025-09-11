@@ -40,6 +40,15 @@ export async function PUT(req) {
       );
     }
 
+    // ✅ Allowed statuses (match DB constraint)
+    const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled"];
+    if (!validStatuses.includes(status)) {
+      return NextResponse.json(
+        { error: `Invalid status: ${status}. Must be one of ${validStatuses.join(", ")}` },
+        { status: 400 }
+      );
+    }
+
     const query = "UPDATE orders SET status = $1 WHERE id = $2 RETURNING *";
     const result = await db.query(query, [status, orderId]);
 

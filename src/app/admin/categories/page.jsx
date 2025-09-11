@@ -3,22 +3,27 @@ import { useEffect, useState } from "react";
 import AdminNavbar from "@/components/AdminNavbar";
 import { Plus, Edit3, Trash2, Save, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Loader from "@/components/Loader";
 
 export default function ManageCategories() {
   const [categories, setCategories] = useState([]);
   const [newCat, setNewCat] = useState({ name: "", description: "" });
   const [editing, setEditing] = useState(null);
   const [editData, setEditData] = useState({ name: "", description: "" });
+  const[loading,setLoading] = useState(false)
 
   // ====== Fetch ======
   async function fetchCategories() {
+    setLoading(true)
     const res = await fetch("/api/admin/categories");
     const data = await res.json();
     setCategories(data);
+    setLoading(false)
   }
 
   // ====== Add ======
   async function addCategory() {
+    setLoading(true)
     if (!newCat.name.trim() || !newCat.description.trim()) return;
     await fetch("/api/admin/categories", {
       method: "POST",
@@ -27,10 +32,12 @@ export default function ManageCategories() {
     });
     setNewCat({ name: "", description: "" });
     fetchCategories();
+    setLoading(false)
   }
 
   // ====== Update ======
   async function updateCategory(id) {
+    setLoading(true)
     await fetch(`/api/admin/categories/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -38,17 +45,24 @@ export default function ManageCategories() {
     });
     setEditing(null);
     fetchCategories();
+    setLoading(false)
   }
 
   // ====== Delete ======
   async function deleteCategory(id) {
+    setLoading(true)
     await fetch(`/api/admin/categories/${id}`, { method: "DELETE" });
     fetchCategories();
+    setLoading(false)
   }
 
   useEffect(() => {
     fetchCategories();
   }, []);
+
+  if(loading){
+    return <Loader/>
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">

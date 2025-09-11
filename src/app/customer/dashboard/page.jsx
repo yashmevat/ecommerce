@@ -7,24 +7,36 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
   BarChart, Bar, XAxis, YAxis
 } from "recharts";
+import Loader from "@/components/Loader";
 
 export default function CustomerDashboard() {
   const { data: session, status } = useSession();
   const [orders, setOrders] = useState([]);
-  const [stats, setStats] = useState({ pending: 0, approved: 0 });
+  const [stats, setStats] = useState({});
+  const [loading, setLoading] = useState(false);
 
   // Fetch customer orders
   useEffect(() => {
+    setLoading(true);
     if (session?.user?.id) {
-      fetch(`/api/orders?user_id=${session.user.id}`)
+      fetch(`/api/orders/${session.user.id}`)
         .then((res) => res.json())
         .then((data) => {
           setOrders(data);
-          const pending = data.filter((o) => o.status === "pending").length;
-          const approved = data.filter((o) => o.status === "approved").length;
-          setStats({ pending, approved });
+
+          // Count each status dynamically
+          const statusCounts = data.reduce((acc, order) => {
+            acc[order.status] = (acc[order.status] || 0) + 1;
+            return acc;
+          }, {});
+
+          setStats(statusCounts);
+          setLoading(false);
         })
-        .catch((err) => console.error("Error fetching orders:", err));
+        .catch((err) => {
+          console.error("Error fetching orders:", err);
+          setLoading(false);
+        });
     }
   }, [session]);
 
@@ -49,13 +61,22 @@ export default function CustomerDashboard() {
       </div>
     );
 
-  // Chart Data
-  const chartData = [
-    { name: "Pending Orders", value: stats.pending },
-    { name: "Approved Orders", value: stats.approved },
-  ];
+  // Convert stats into chart-friendly format
+  const chartData = Object.entries(stats).map(([status, value]) => ({
+    name: status.charAt(0).toUpperCase() + status.slice(1),
+    value,
+  }));
 
-  const COLORS = ["#F59E0B", "#10B981"]; // yellow, green
+  // Dynamic colors
+  const COLORS = [
+    "#F59E0B", // yellow
+    "#10B981", // green
+    "#3B82F6", // blue
+    "#EF4444", // red
+    "#8B5CF6", // purple
+    "#EC4899", // pink
+    "#14B8A6", // teal
+  ];
 
   return (
     <>
@@ -63,71 +84,80 @@ export default function CustomerDashboard() {
 
       <div className="max-w-7xl mx-auto p-6">
         <h1 className="text-4xl font-bold mb-6 text-gray-800">
-          👋 Welcome, {session.user.name}!
+          Welcome, {session.user.name}!
         </h1>
         <p className="text-gray-600 mb-12">
           Here's an overview of your orders and activities.
         </p>
 
-        {/* Dashboard Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <DashboardCard title="🟡 Pending Orders" value={stats.pending} subtitle="Awaiting approval" />
-          <DashboardCard title="🟢 Approved Orders" value={stats.approved} subtitle="Completed successfully" />
-          <DashboardCard title="🛒 Total Orders" value={orders.length} subtitle="All placed orders" />
-          <DashboardCard title="👤 Profile" value={session.user.name} subtitle={session.user.email} />
-        </div>
+        {loading ? (
+          <Loader />
+        ) : (
+          <>
+            {/* Dashboard Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {Object.entries(stats).map(([status, value]) => (
+                <DashboardCard
+                  key={status}
+                  title={`${status.charAt(0).toUpperCase() + status.slice(1)} Orders`}
+                  value={value}
+                  subtitle={`Total ${status}`}
+                />
+              ))}
+              <DashboardCard
+                title="Total Orders"
+                value={orders.length}
+                subtitle="All placed orders"
+              />
+              <DashboardCard
+                title="Profile"
+                value={session.user.name}
+                subtitle={session.user.email}
+              />
+            </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12">
-          {/* Pie Chart */}
-          <div className="bg-white p-6 rounded-2xl shadow">
-            <h2 className="text-lg font-semibold mb-4">Order Status Overview</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  label
-                >
-                  {chartData.map((_, index) => (
-                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12">
+              {/* Pie Chart */}
+              <div className="bg-white p-6 rounded-2xl shadow">
+                <h2 className="text-lg font-semibold mb-4">Order Status Overview</h2>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      label
+                    >
+                      {chartData.map((_, index) => (
+                        <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
 
-          {/* Bar Chart */}
-          <div className="bg-white p-6 rounded-2xl shadow">
-            <h2 className="text-lg font-semibold mb-4">Orders Comparison</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="value" fill="#3B82F6" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        {/* <div className="mt-12">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800">Quick Actions</h2>
-          <div className="flex flex-wrap gap-4">
-            <ActionButton label="Browse Products" color="blue" />
-            <ActionButton label="View Cart" color="green" />
-            <ActionButton label="Wishlist" color="purple" />
-            <ActionButton label="Logout" color="red" onClick={signOut} />
-          </div>
-        </div> */}
+              {/* Bar Chart */}
+              <div className="bg-white p-6 rounded-2xl shadow">
+                <h2 className="text-lg font-semibold mb-4">Orders by Status</h2>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={chartData}>
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="value" fill="#3B82F6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </>
   );
@@ -141,17 +171,5 @@ function DashboardCard({ title, value, subtitle }) {
       <p className="text-3xl font-bold mt-2 text-gray-900">{value}</p>
       <p className="mt-1 text-gray-500">{subtitle}</p>
     </div>
-  );
-}
-
-// Quick Action Button Component
-function ActionButton({ label, color, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-6 py-3 bg-${color}-600 hover:bg-${color}-700 text-white rounded-lg font-semibold transition`}
-    >
-      {label}
-    </button>
   );
 }

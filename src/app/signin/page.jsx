@@ -1,15 +1,16 @@
 "use client";
+import Loader from "@/components/Loader";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-
+import { useState } from "react";
 export default function SigninPage() {
   const router = useRouter();
-
+  const [loading,setLoading]= useState(false)
   async function handleSubmit(e) {
     e.preventDefault();
     const email = e.target.email.value;
     const password = e.target.password.value;
-
+    setLoading(true);
     const result = await signIn("credentials", {
       email,
       password,
@@ -26,10 +27,16 @@ export default function SigninPage() {
         router.push("/customer/dashboard");
       }
     }
+    setLoading(false)
   }
 
   async function handleGoogleLogin() {
+    
     await signIn("google", { callbackUrl: "/customer/dashboard" });
+  }
+
+  if(loading){
+    return <Loader/>
   }
 
   return (

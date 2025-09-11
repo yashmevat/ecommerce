@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 import CustomerCheckout from "@/components/CustomerCheckout";
+import Loader from "@/components/Loader";
 
 export default function CartPage() {
   const { data: session, status } = useSession();
@@ -51,24 +52,20 @@ export default function CartPage() {
     0
   );
 
-  if (status === "loading")
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-lg">Loading session...</p>
-      </div>
-    );
+  // if (status === "loading")
+  //   return (
+  //    <Loader/>
+  //   );
   if (!session)
     return (
       <div className="flex justify-center items-center h-screen">
         <p className="text-lg">Please login to view your cart.</p>
       </div>
     );
-  if (loading)
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-lg">Loading cart...</p>
-      </div>
-    );
+  // if (loading)
+  //   return (
+  //    <Loader/>
+  //   );
 if (cartItems.length === 0)
   return (
     <div>
@@ -101,7 +98,8 @@ if (cartItems.length === 0)
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto p-4">
+{
+    loading?(<Loader/>):(<div className="max-w-6xl mx-auto p-4">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 text-center">
           🛒 Your Cart
         </h1>
@@ -125,18 +123,33 @@ if (cartItems.length === 0)
                 {/* Quantity Input */}
                 <div className="flex items-center gap-2 mt-1">
                   <label className="text-gray-700">Qty:</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={quantities[item.id] || 0}
-                    onChange={(e) =>
-                      setQuantities({
-                        ...quantities,
-                        [item.id]: parseInt(e.target.value),
-                      })
-                    }
-                    className="w-16 border border-gray-300 p-1 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-                  />
+                <input
+                      type="number"
+                      min={0}
+                      value={quantities[item.id] || 0}
+                      onChange={async (e) => {
+                        const newQty = parseInt(e.target.value);
+
+                        // update state first (optimistic UI)
+                        setQuantities({
+                          ...quantities,
+                          [item.id]: newQty,
+                        });
+
+                        try {
+                          await fetch(`/api/cart/${userId}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ productId: item.product_id, quantity: newQty }),
+                          });
+                        } catch (err) {
+                          console.error("Error updating quantity:", err);
+                        }
+                      }}
+                      className="w-16 border border-gray-300 p-1 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                    />
+
+
                 </div>
               </div>
             </div>
@@ -164,7 +177,9 @@ if (cartItems.length === 0)
             onClose={() => setShowCheckout(false)}
           />
         )}
-      </div>
+      </div>)
+}
+      
     </div>
   );
 }
