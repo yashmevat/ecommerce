@@ -3,7 +3,7 @@
 import { loadStripe } from "@stripe/stripe-js";
 import { useEffect, useState } from "react";
 const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  process.env.STRIPE_PUBLISHABLE_KEY
 );
 
 export default function CustomerCheckout({ userId, cartTotal, onOrderPlaced, onClose ,cartItems}) {
@@ -157,7 +157,7 @@ export default function CustomerCheckout({ userId, cartTotal, onOrderPlaced, onC
             💵 Cash on Delivery
           </label>
 
-          {/* <label
+          <label
             className={`flex items-center gap-2 border rounded-xl p-3 cursor-pointer transition 
               ${
                 paymentMethod === "testpay"
@@ -174,7 +174,7 @@ export default function CustomerCheckout({ userId, cartTotal, onOrderPlaced, onC
               className="hidden"
             />
             💳 Pay with TestPay
-          </label> */}
+          </label>
         </div>
       </div>
 
