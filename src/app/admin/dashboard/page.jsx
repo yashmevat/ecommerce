@@ -7,6 +7,7 @@ import {
   PieChart, Pie, Cell, LineChart, Line
 } from "recharts";
 import Loader from "@/components/Loader";
+import Footer from "@/components/Footer";
 
 export default function AdminDashboardPage() {
   const [loading,setLoading] = useState(false)
@@ -207,6 +208,7 @@ export default function AdminDashboardPage() {
           </table>
         </div>
       </div>
+      <Footer/>
     </div>
   );
 }

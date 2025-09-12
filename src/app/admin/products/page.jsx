@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import AdminNavbar from "@/components/AdminNavbar";
 import { Plus, Edit3, Trash2, Save } from "lucide-react";
 import Loader from "@/components/Loader";
+import Footer from "@/components/Footer";
 
 export default function ManageProducts() {
   const [products, setProducts] = useState([]);
@@ -230,6 +231,7 @@ export default function ManageProducts() {
           )}
         </div>
       </div>
+      <Footer/>
     </div>
   );
 }

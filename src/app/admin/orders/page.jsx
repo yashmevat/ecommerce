@@ -1,5 +1,6 @@
 "use client";
 import AdminNavbar from "@/components/AdminNavbar";
+import Footer from "@/components/Footer";
 import Loader from "@/components/Loader";
 import { useState, useEffect } from "react";
 
@@ -147,6 +148,7 @@ export default function AdminOrders() {
       </tbody>
     </table>
   </div>
+  <Footer/>
 </div>
 
 

@@ -18,7 +18,7 @@ async function seedAdmin() {
   } else {
     await db.query(
       "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)",
-      ["Admin User", email, hashedPassword, "admin"]
+      ["Admin", email, hashedPassword, "admin"]
     );
     console.log("✅ Admin created:", email);
   }

@@ -4,6 +4,7 @@ import AdminNavbar from "@/components/AdminNavbar";
 import { Plus, Edit3, Trash2, Save, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Loader from "@/components/Loader";
+import Footer from "@/components/Footer";
 
 export default function ManageCategories() {
   const [categories, setCategories] = useState([]);
@@ -194,6 +195,7 @@ export default function ManageCategories() {
           )}
         </div>
       </div>
+      <Footer/>
     </div>
   );
 }
