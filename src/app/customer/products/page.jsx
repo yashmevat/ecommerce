@@ -127,7 +127,7 @@ export default function ProductsPage() {
         ) : products.length === 0 ? (
           <p className="text-center text-gray-500">No products found 😢</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 h-[80vh] overflow-x-auto custom-scroll">
             {products.map((product) => (
               <div
                 key={product.id}
