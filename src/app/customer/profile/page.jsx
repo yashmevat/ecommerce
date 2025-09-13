@@ -2,6 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -24,7 +25,7 @@ export default function ProfilePage() {
   const { user } = session;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen bg-gray-50 flex flex-col justify-between">
       <Navbar />
 
       <div className="max-w-3xl mx-auto p-6">
@@ -72,6 +73,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+      <Footer/>
     </div>
   );
 }

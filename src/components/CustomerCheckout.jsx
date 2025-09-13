@@ -84,7 +84,7 @@ export default function CustomerCheckout({ userId, cartTotal, onOrderPlaced, onC
 
  
   return (
-   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 text-black">
   <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative animate-fadeIn">
     {/* Close Button */}
     <button

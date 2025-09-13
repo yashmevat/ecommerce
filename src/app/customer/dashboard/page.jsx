@@ -8,6 +8,7 @@ import {
   BarChart, Bar, XAxis, YAxis
 } from "recharts";
 import Loader from "@/components/Loader";
+import Footer from "@/components/Footer";
 
 export default function CustomerDashboard() {
   const { data: session, status } = useSession();
@@ -80,9 +81,9 @@ export default function CustomerDashboard() {
 
   return (
     <>
-      <Navbar />
 
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-full">
+      <Navbar />
         <h1 className="text-4xl font-bold mb-6 text-gray-800">
           Welcome, {session.user.name}!
         </h1>
@@ -158,6 +159,7 @@ export default function CustomerDashboard() {
             </div>
           </>
         )}
+      <Footer/>
       </div>
     </>
   );

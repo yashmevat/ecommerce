@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 import Loader from "@/components/Loader";
+import Footer from "@/components/Footer";
 
 export default function ProductsPage() {
   const { data: session, status } = useSession();
@@ -11,7 +12,13 @@ export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [quantities, setQuantities] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // global loader
+  const [loadingMore, setLoadingMore] = useState(false); // for load more
+  const [addingToCart, setAddingToCart] = useState(null); // productId when adding
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const userId = session?.user?.id;
 
@@ -34,29 +41,41 @@ export default function ProductsPage() {
 
   // Fetch Products
   useEffect(() => {
-    async function fetchProducts() {
-      try {
-        setLoading(true);
-        let url = "/api/products";
-        if (selectedCategory) url += `?category_id=${selectedCategory}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        setProducts(data);
-      } catch (err) {
-        console.error("Error fetching products:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProducts();
+    setPage(1); // reset page when category changes
+    setProducts([]);
+    fetchProducts(1, true);
   }, [selectedCategory]);
 
-  if (status === "loading") {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-lg">Loading session...</p>
-      </div>
-    );
+  async function fetchProducts(pageNumber = 1, reset = false) {
+    try {
+      if (pageNumber === 1) {
+        setLoading(true); // full page loader for first fetch
+      } else {
+        setLoadingMore(true); // loader only for load more
+      }
+
+      let url = `/api/products?page=${pageNumber}&limit=4`;
+      if (selectedCategory) url += `&category_id=${selectedCategory}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!data.products) return;
+
+      if (reset) {
+        setProducts(data.products);
+      } else {
+        setProducts((prev) => [...prev, ...data.products]);
+      }
+
+      setTotalPages(data.totalPages);
+      setPage(pageNumber);
+    } catch (err) {
+      console.error("Error fetching products:", err);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
   }
 
   async function addToCart(productId) {
@@ -66,7 +85,7 @@ export default function ProductsPage() {
       return;
     }
     try {
-      setLoading(true);
+      setAddingToCart(productId);
       const res = await fetch("/api/cart/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -81,15 +100,23 @@ export default function ProductsPage() {
     } catch (err) {
       console.error("Error adding to cart:", err);
     } finally {
-      setLoading(false);
+      setAddingToCart(null);
     }
   }
 
+  if (status === "loading") {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex flex-col justify-between bg-gray-50">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto p-4">
+      <div className="max-w-7xl mx-auto p-4 h-full flex-1">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 text-center">
           🛍 Products
         </h1>
@@ -121,65 +148,93 @@ export default function ProductsPage() {
           </select>
         </div>
 
-        {/* Loader */}
-        {loading ? (
-         <Loader/>
+        {/* Loader for initial fetch */}
+        {loading && products.length === 0 ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader />
+          </div>
         ) : products.length === 0 ? (
           <p className="text-center text-gray-500">No products found 😢</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="bg-white rounded-2xl shadow hover:shadow-xl transition p-4 flex flex-col"
-              >
-                <img
-                  src={product.image_url}
-                  alt={product.name}
-                  className="w-full h-48 object-cover rounded-xl mb-4"
-                />
-                <h2 className="text-xl font-semibold text-gray-800">{product.name}</h2>
-                <p className="text-gray-500 text-sm mt-1 line-clamp-2">
-                  {product.description}
-                </p>
-                <p className="text-lg font-bold mt-2">₹{product.price}</p>
-
-                {/* Quantity Input */}
-                <div className="mt-3 flex items-center gap-2">
-                  <label htmlFor={`qty-${product.id}`} className="text-gray-700">
-                    Qty:
-                  </label>
-                  <input
-                    id={`qty-${product.id}`}
-                    type="number"
-                    min="1"
-                    value={quantities[product.id] || 1}
-                    onChange={(e) =>
-                      setQuantities({
-                        ...quantities,
-                        [product.id]: parseInt(e.target.value, 10),
-                      })
-                    }
-                    className="w-16 border border-gray-300 p-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
-                  />
-                </div>
-
-                <button
-                  onClick={() => addToCart(product.id)}
-                  disabled={!userId || loading}
-                  className={`mt-4 py-2 rounded-lg text-white font-semibold transition ${
-                    userId && !loading
-                      ? "bg-green-600 hover:bg-green-700"
-                      : "bg-gray-400 cursor-not-allowed"
-                  }`}
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {products.map((product) => (
+                <div
+                  key={product.id}
+                  className="bg-white rounded-2xl shadow hover:shadow-xl transition p-4 flex flex-col"
                 >
-                  {userId ? "Add to Cart" : "Login to Add"}
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className="w-full h-48 object-cover rounded-xl mb-4"
+                  />
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    {product.name}
+                  </h2>
+                  <p className="text-gray-500 text-sm mt-1 line-clamp-2">
+                    {product.description}
+                  </p>
+                  <p className="text-lg font-bold mt-2">₹{product.price}</p>
+
+                  {/* Quantity Input */}
+                  <div className="mt-3 flex items-center gap-2">
+                    <label
+                      htmlFor={`qty-${product.id}`}
+                      className="text-gray-700"
+                    >
+                      Qty:
+                    </label>
+                    <input
+                      id={`qty-${product.id}`}
+                      type="number"
+                      min="1"
+                      value={quantities[product.id] || 1}
+                      onChange={(e) =>
+                        setQuantities({
+                          ...quantities,
+                          [product.id]: parseInt(e.target.value, 10),
+                        })
+                      }
+                      className="w-16 border border-gray-300 p-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                    />
+                  </div>
+
+                  <button
+                    onClick={() => addToCart(product.id)}
+                    disabled={!userId || addingToCart === product.id}
+                    className={`mt-4 py-2 rounded-lg text-white font-semibold transition ${
+                      userId && addingToCart !== product.id
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    {addingToCart === product.id
+                      ? "Adding..."
+                      : userId
+                      ? "Add to Cart"
+                      : "Login to Add"}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Load More Button */}
+            {page < totalPages && (
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={() => fetchProducts(page + 1)}
+                  disabled={loadingMore}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
+                >
+                  {loadingMore ? "Loading..." : "Load More"}
                 </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }

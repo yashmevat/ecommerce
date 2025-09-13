@@ -10,7 +10,7 @@ import Loader from "@/components/Loader";
 import Footer from "@/components/Footer";
 
 export default function AdminDashboardPage() {
-  const [loading,setLoading] = useState(false)
+  const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
   const [stats, setStats] = useState({
     pendingOrders: 0,
@@ -21,23 +21,30 @@ export default function AdminDashboardPage() {
   const [recentOrders, setRecentOrders] = useState([]);
 
   useEffect(() => {
-    setLoading(true)
-    getSession().then((sess) => {
-      if (!sess) {
-        window.location.href = "/signin";
-      } else if (sess.user.role !== "admin") {
-        window.location.href = "/customer/dashboard";
-      } else {
+    const init = async () => {
+      try {
+        const sess = await getSession();
+        if (!sess) {
+          window.location.href = "/signin";
+          return;
+        }
+        if (sess.user.role !== "admin") {
+          window.location.href = "/customer/dashboard";
+          return;
+        }
         setSession(sess);
-        fetchDashboardData();
+        await fetchDashboardData();
+      } catch (err) {
+        console.error("Session error:", err);
+      } finally {
+        setLoading(false);
       }
-    });
-    setLoading(false)
+    };
+    init();
   }, []);
 
   const fetchDashboardData = async () => {
     try {
-      setLoading(true)
       const [productsRes, categoriesRes, ordersRes] = await Promise.all([
         fetch("/api/products"),
         fetch("/api/admin/categories"),
@@ -51,7 +58,7 @@ export default function AdminDashboardPage() {
       ]);
 
       const pendingOrders = orders.filter(
-        (o) => o.status.toLowerCase() === "pending"
+        (o) => o.status?.toLowerCase() === "pending"
       ).length;
 
       const uniqueCustomers = new Set(orders.map((o) => o.user_id)).size;
@@ -64,14 +71,13 @@ export default function AdminDashboardPage() {
       });
 
       setRecentOrders(orders.slice(0, 5));
-      setLoading(false)
     } catch (err) {
-      setLoading(false)
       console.error("Error fetching dashboard data:", err);
     }
   };
 
-  if (!session) return <p>Loading...</p>;
+  if (loading) return <Loader />;
+  if (!session) return null; // redirect hone ke baad kuch dikhane ki zarurat nahi
 
   // 🔹 Chart Data
   const statsData = [
@@ -82,16 +88,13 @@ export default function AdminDashboardPage() {
   ];
 
   const orderStatusData = [
-    { name: "Pending", value: recentOrders.filter(o => o.status.toLowerCase() === "pending").length },
-    { name: "Completed", value: recentOrders.filter(o => o.status.toLowerCase() === "completed").length },
-    { name: "Cancelled", value: recentOrders.filter(o => o.status.toLowerCase() === "cancelled").length },
+    { name: "Pending", value: recentOrders.filter(o => o.status?.toLowerCase() === "pending").length },
+    { name: "Completed", value: recentOrders.filter(o => o.status?.toLowerCase() === "completed").length },
+    { name: "Cancelled", value: recentOrders.filter(o => o.status?.toLowerCase() === "cancelled").length },
   ];
 
-  const COLORS = ["#3B82F6", "#6B7280", "#D1D5DB"]; // subtle blue, gray
+  const COLORS = ["#3B82F6", "#10B981", "#EF4444"]; // blue, green, red
 
-  if(loading){
-    return <Loader/>
-  }
   return (
     <div className="min-h-screen bg-gray-100">
       <AdminNavbar />
@@ -154,7 +157,12 @@ export default function AdminDashboardPage() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="total_amount" stroke="#3B82F6" name="Order Total ₹" />
+                <Line
+                  type="monotone"
+                  dataKey="total_amount"
+                  stroke="#3B82F6"
+                  name="Order Total ₹"
+                />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -190,9 +198,9 @@ export default function AdminDashboardPage() {
                     <td className="p-3">
                       <span
                         className={`px-3 py-1 text-xs font-medium rounded ${
-                          order.status.toLowerCase() === "pending"
+                          order.status?.toLowerCase() === "pending"
                             ? "bg-yellow-100 text-yellow-700"
-                            : order.status.toLowerCase() === "completed"
+                            : order.status?.toLowerCase() === "completed"
                             ? "bg-green-100 text-green-700"
                             : "bg-red-100 text-red-700"
                         }`}
@@ -208,7 +216,7 @@ export default function AdminDashboardPage() {
           </table>
         </div>
       </div>
-      <Footer/>
+      <Footer />
     </div>
   );
 }
