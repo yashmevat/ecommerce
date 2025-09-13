@@ -20,6 +20,11 @@ export default function AdminNavbar() {
     });
   }, []);
 
+  useEffect(()=>{
+    if(session)
+    console.log("session",session)
+  },[session])
+
   const toggleMenu = () => setIsOpen(!isOpen);
 
   // Navbar will render immediately; session-dependent info will update when available

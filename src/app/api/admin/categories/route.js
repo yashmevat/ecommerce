@@ -1,4 +1,6 @@
-import { getConnection } from "@/lib/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../auth/[...nextauth]/route"; // adjust path if needed
+import { getConnection } from "../../../../lib/db";
 import { NextResponse } from "next/server";
 
 // ✅ Get all categories
@@ -16,13 +18,31 @@ export async function GET() {
 // ✅ Create new category
 export async function POST(req) {
   try {
-    const { name ,description} = await req.json();
+    // 🔑 Get user session
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // 🔎 Check role
+    if (session.user.role !== "admin") {
+      return NextResponse.json({ error: "Forbidden - Admins only" }, { status: 403 });
+    }
+
+    const { name, description } = await req.json();
     if (!name || !description) {
-      return NextResponse.json({ error: "Category name and description required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Category name and description required" },
+        { status: 400 }
+      );
     }
 
     const db = getConnection();
-    await db.query("INSERT INTO categories (name,description) VALUES ($1,$2)", [name,description]);
+    await db.query("INSERT INTO categories (name, description) VALUES ($1, $2)", [
+      name,
+      description,
+    ]);
 
     return NextResponse.json({ message: "Category created" }, { status: 201 });
   } catch (error) {

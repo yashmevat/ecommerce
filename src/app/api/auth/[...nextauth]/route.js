@@ -10,8 +10,7 @@ async function getUserByEmail(email) {
   const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
   return result.rows.length > 0 ? result.rows[0] : null;
 }
-
-const handler = NextAuth({
+export const authOptions = {
   providers: [
     // ✅ Credentials login
     CredentialsProvider({
@@ -54,7 +53,7 @@ const handler = NextAuth({
         if (result.rows.length === 0) {
           const insertResult = await db.query(
             "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *",
-            [user.name || "Google User", user.email, null, "customer"]
+            [user.name || "Google User", user.email, "", "customer"]
           );
           dbUser = insertResult.rows[0];
         } else {
@@ -73,7 +72,7 @@ const handler = NextAuth({
         token.id = user.id;
         token.role = user.role || "customer";
       }
-      return token;
+      return token;       
     },
 
     async session({ session, token }) {
@@ -89,6 +88,7 @@ const handler = NextAuth({
     signIn: "/signin",
   },
   secret: process.env.NEXTAUTH_SECRET,
-});
+}
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
